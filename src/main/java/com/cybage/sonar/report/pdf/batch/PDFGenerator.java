@@ -21,6 +21,9 @@ import com.cybage.sonar.report.pdf.entity.exception.ReportException;
 import com.cybage.sonar.report.pdf.util.Credentials;
 import com.itextpdf.text.DocumentException;
 
+/**
+ * The type Pdf generator is responsible to configure and launch the PDF report generation.
+ */
 public class PDFGenerator {
 
     public static final String SONAR_BASE_URL  = "sonar.base.url";
@@ -69,37 +72,7 @@ public class PDFGenerator {
         Properties configLang = new Properties();
 
         try {
-            if (sonarHostUrl != null) {
-                if (sonarHostUrl.endsWith("/")) {
-                    sonarHostUrl = sonarHostUrl.substring(0, sonarHostUrl.length() - 1);
-                }
-                config.put(SONAR_BASE_URL, sonarHostUrl);
-                config.put(FRONT_PAGE_LOGO, "sonar.png");
-            } else {
-                config.load(this.getClass().getResourceAsStream("/report.properties"));
-            }
-            configLang.load(this.getClass().getResourceAsStream("/report-texts-en.properties"));
-
-            Credentials credentials = new Credentials(config.getProperty(SONAR_BASE_URL), username, password);
-
-            final String                  sonarProjectId      = projectKey;
-            String                        sonarProjectVersion = projectVersion;
-            final List<String>            sonarLanguage       = this.sonarLanguage;
-            final Set<String>             otherMetrics        = this.otherMetrics;
-            final Set<String>             typesOfIssue        = this.typesOfIssue;
-            final LeakPeriodConfiguration leakPeriod          = this.leakPeriod;
-
-            final SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
-
-            final String path = computePdfReportPath(sonarProjectId, sdf);
-
-            PDFReporter reporter = initializeReporter(config, configLang, credentials, sonarProjectId, sonarProjectVersion, sonarLanguage, otherMetrics, typesOfIssue, leakPeriod);
-
-            if (reporter == null) {
-                LOGGER.warn("Could not initialize the reporting plugin");
-                return;
-            }
-            writePdfReport(sonarProjectId, sdf, path, reporter);
+            configureAndLaunchReports(config, configLang);
 
 
         } catch (IOException e) {
@@ -111,6 +84,40 @@ public class PDFGenerator {
             LOGGER.error(e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void configureAndLaunchReports(Properties config, Properties configLang) throws IOException, ReportException, DocumentException {
+        if (sonarHostUrl != null) {
+            if (sonarHostUrl.endsWith("/")) {
+                sonarHostUrl = sonarHostUrl.substring(0, sonarHostUrl.length() - 1);
+            }
+            config.put(SONAR_BASE_URL, sonarHostUrl);
+            config.put(FRONT_PAGE_LOGO, "sonar.png");
+        } else {
+            config.load(this.getClass().getResourceAsStream("/report.properties"));
+        }
+        configLang.load(this.getClass().getResourceAsStream("/report-texts-en.properties"));
+
+        Credentials credentials = new Credentials(config.getProperty(SONAR_BASE_URL), username, password);
+
+        final String                  sonarProjectId      = projectKey;
+        String                        sonarProjectVersion = projectVersion;
+        final List<String>            sonarLanguage       = this.sonarLanguage;
+        final Set<String>             otherMetrics        = this.otherMetrics;
+        final Set<String>             typesOfIssue        = this.typesOfIssue;
+        final LeakPeriodConfiguration leakPeriod          = this.leakPeriod;
+
+        final SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
+
+        final String path = computePdfReportPath(sonarProjectId, sdf);
+
+        PDFReporter reporter = initializeReporter(config, configLang, credentials, sonarProjectId, sonarProjectVersion, sonarLanguage, otherMetrics, typesOfIssue, leakPeriod);
+
+        if (reporter == null) {
+            LOGGER.warn("Could not initialize the reporting plugin");
+            return;
+        }
+        writePdfReport(sonarProjectId, sdf, path, reporter);
     }
 
     private String computePdfReportPath(String sonarProjectId, SimpleDateFormat sdf) {

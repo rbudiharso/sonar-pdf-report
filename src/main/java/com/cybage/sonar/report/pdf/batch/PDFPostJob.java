@@ -1,10 +1,5 @@
 package com.cybage.sonar.report.pdf.batch;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.cybage.sonar.report.pdf.entity.LeakPeriodConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +9,11 @@ import org.sonar.api.batch.postjob.PostJobContext;
 import org.sonar.api.batch.postjob.PostJobDescriptor;
 import org.sonar.api.config.Configuration;
 
-import com.cybage.sonar.report.pdf.util.LeakPeriods;
-
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class PDFPostJob implements PostJob {
 
@@ -56,74 +53,71 @@ public class PDFPostJob implements PostJob {
         Configuration configuration = postJobContext.config();
         if (configuration.hasKey(SKIP_PDF_KEY) && configuration.getBoolean(SKIP_PDF_KEY).get() == true) {
             LOGGER.info("Skipping generation of PDF Report..");
-        } else {
-
-            try {
-                Thread.sleep(STARTUP_DELAY_IN_MS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            String projectKey = configuration.get("sonar.projectKey").get();
-
-            LOGGER.info("Executing decorator: PDF Report");
-            try {
-                LOGGER.info("postCOnfig {}", configuration.getClass().getMethod("getProperties").invoke(configuration));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-            String sonarHostUrl = configuration.hasKey(SONAR_HOST_URL)
-                    ? configuration.get(SONAR_HOST_URL).get() : SONAR_HOST_URL_DEFAULT_VALUE;
-            String username = configuration.hasKey(USERNAME) ? configuration.get(USERNAME).get()
-                    : USERNAME_DEFAULT_VALUE;
-            String password = configuration.hasKey(PASSWORD) ? configuration.get(PASSWORD).get()
-                    : PASSWORD_DEFAULT_VALUE;
-            String reportType = configuration.hasKey(REPORT_TYPE)
-                    ? configuration.get(REPORT_TYPE).get() : REPORT_TYPE_DEFAULT_VALUE;
-            String projectVersion = configuration.hasKey(SONAR_PROJECT_VERSION)
-                    ? configuration.get(SONAR_PROJECT_VERSION).get() : SONAR_PROJECT_VERSION_DEFAULT_VALUE;
-            List<String> sonarLanguage = configuration.hasKey(SONAR_LANGUAGE)
-                    ? Arrays.asList(configuration.getStringArray(SONAR_LANGUAGE)) : null;
-            Set<String> otherMetrics = configuration.hasKey(OTHER_METRICS)
-                    ? new HashSet<>(Arrays.asList(configuration.getStringArray(OTHER_METRICS))) : null;
-            Set<String> typesOfIssue = configuration.hasKey(TYPES_OF_ISSUE)
-                    ? new HashSet<>(Arrays.asList(configuration.getStringArray(TYPES_OF_ISSUE)))
-                    : new HashSet<>();
-
-            LeakPeriodConfiguration leakPeriodConfiguration = new LeakPeriodConfiguration();
-            if (configuration.hasKey(LEAK_PERIOD)) {
-                String configurationValue = configuration.get(LEAK_PERIOD).get();
-                LOGGER.info("Plugin will use the following leak period MODE={}", configurationValue);
-                leakPeriodConfiguration.update(configurationValue);
-            } else {
-                LOGGER.info("Plugin will try to guess the default LEAK Period");
-            }
-
-
-            PDFGenerator generator = new PDFGenerator(projectKey, projectVersion, sonarLanguage, otherMetrics,
-                    typesOfIssue, leakPeriodConfiguration, fs, sonarHostUrl, username, password, reportType);
-
-            try {
-                generator.execute();
-            } catch (Exception ex) {
-                LOGGER.error("Error in generating PDF report.");
-            }
-
+            return;
         }
-        /*
-         * String path = fs.workDir().getAbsolutePath() + "/" +
-         * projectKey.replace(':', '-') + ".pdf";
-         *
-         * File pdf = new File(path); if (pdf.exists()) {
-         * FileUploader.upload(pdf, sonarHostUrl, username, password); } else {
-         * LOGGER.
-         * error("PDF file not found in local filesystem. Report could not be sent to server."
-         * ); }
-         */
 
+        waitBeforeReporting();
+
+        String projectKey = configuration.get("sonar.projectKey").get();
+        LOGGER.info("Executing decorator: PDF Report");
+
+        String sonarHostUrl = configuration.hasKey(SONAR_HOST_URL)
+                ? configuration.get(SONAR_HOST_URL).get() : SONAR_HOST_URL_DEFAULT_VALUE;
+        String username = configuration.hasKey(USERNAME) ? configuration.get(USERNAME).get()
+                : USERNAME_DEFAULT_VALUE;
+        String password = configuration.hasKey(PASSWORD) ? configuration.get(PASSWORD).get()
+                : PASSWORD_DEFAULT_VALUE;
+        String reportType = configuration.hasKey(REPORT_TYPE)
+                ? configuration.get(REPORT_TYPE).get() : REPORT_TYPE_DEFAULT_VALUE;
+        String projectVersion = configuration.hasKey(SONAR_PROJECT_VERSION)
+                ? configuration.get(SONAR_PROJECT_VERSION).get() : SONAR_PROJECT_VERSION_DEFAULT_VALUE;
+        List<String> sonarLanguage = configuration.hasKey(SONAR_LANGUAGE)
+                ? Arrays.asList(configuration.getStringArray(SONAR_LANGUAGE)) : null;
+        Set<String> otherMetrics = configuration.hasKey(OTHER_METRICS)
+                ? new HashSet<>(Arrays.asList(configuration.getStringArray(OTHER_METRICS))) : null;
+        Set<String> typesOfIssue = configuration.hasKey(TYPES_OF_ISSUE)
+                ? new HashSet<>(Arrays.asList(configuration.getStringArray(TYPES_OF_ISSUE)))
+                : new HashSet<>();
+
+        LeakPeriodConfiguration leakPeriodConfiguration = new LeakPeriodConfiguration();
+        if (configuration.hasKey(LEAK_PERIOD)) {
+            String configurationValue = configuration.get(LEAK_PERIOD).get();
+            LOGGER.info("Plugin will use the following leak period MODE={}", configurationValue);
+            leakPeriodConfiguration.update(configurationValue);
+        } else {
+            LOGGER.info("Plugin will try to guess the default LEAK Period");
+        }
+
+
+        generatePdfs(projectKey, sonarHostUrl, username, password, reportType, projectVersion, sonarLanguage, otherMetrics, typesOfIssue, leakPeriodConfiguration);
+    }
+
+    private void waitBeforeReporting() {
+        try {
+            Thread.sleep(STARTUP_DELAY_IN_MS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void generatePdfs(String projectKey,
+                              String sonarHostUrl,
+                              String username,
+                              String password,
+                              String reportType,
+                              String projectVersion,
+                              List<String> sonarLanguage,
+                              Set<String> otherMetrics,
+                              Set<String> typesOfIssue,
+                              LeakPeriodConfiguration leakPeriodConfiguration) {
+        PDFGenerator generator = new PDFGenerator(projectKey, projectVersion, sonarLanguage, otherMetrics,
+                typesOfIssue, leakPeriodConfiguration, fs, sonarHostUrl, username, password, reportType);
+
+        try {
+            generator.execute();
+        } catch (Exception ex) {
+            LOGGER.error("Error in generating PDF report.");
+        }
     }
 
 }

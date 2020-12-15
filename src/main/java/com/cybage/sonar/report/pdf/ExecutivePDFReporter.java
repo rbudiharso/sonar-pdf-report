@@ -431,7 +431,7 @@ public class ExecutivePDFReporter extends PDFReporter {
 
     protected void printDashboard(final Project project, final Section section) throws DocumentException {
         section.add(new Phrase("", new Font(FontFamily.COURIER, 6)));
-        LeakPeriodConfiguration leakPeriod = this.getLeakPeriod();
+        final LeakPeriodConfiguration leakPeriod = this.getLeakPeriod();
         LOGGER.info("Leak period {}", leakPeriod);
         LOGGER.info("Periods {}", project.getMeasures().getPeriods());
 
@@ -842,13 +842,16 @@ public class ExecutivePDFReporter extends PDFReporter {
         tableReliability.addCell(bugsValue);
 
         // New Bugs Value
+        Period_ currentPeriod = getCurrentPeriod(project).get();
         if (project.getMeasures().containsMeasure(NEW_BUGS)) {
             List<Period> periods = project.getMeasure(NEW_BUGS).getPeriods();
+            LOGGER.info("Periods found are {} and we are looking for {}", periods, currentPeriod);
             Optional<Period> period = periods
                     .stream()
-                    .filter(p -> p.getIndex() == getCurrentPeriod(project).get().getIndex())
+                    .filter(p -> p.getIndex().equals(currentPeriod.getIndex()))
                     .findFirst();
-            Validate.isTrue(!period.isPresent());
+            Validate.isTrue(period.isPresent());
+
             CustomCellValue newBugsValue = new CustomCellValue(
                     new Phrase(period.get().getValue(),
                             Style.DASHBOARD_DATA_FONT));
@@ -912,7 +915,7 @@ public class ExecutivePDFReporter extends PDFReporter {
             // Reliability Remediation Effort On New Code Value
             CustomCellValue reliabilityRemediationEffortNewValue = new CustomCellValue(new Phrase(SonarUtil
                     .getWorkDurConversion(Integer.parseInt(project.getMeasure(NEW_RELIABILITY_REMEDIATION_EFFORT)
-                            .getPeriods().stream().filter(p -> p.getIndex() == getCurrentPeriod(project).get().getIndex())
+                            .getPeriods().stream().filter(p -> p.getIndex() == currentPeriod.getIndex())
                             .findFirst().get().getValue())),
                     Style.DASHBOARD_DATA_FONT_2));
             reliabilityRemediationEffortNewValue.setBackgroundColor(Style.DASHBOARD_NEW_METRIC_BACKGROUND_COLOR);
@@ -936,7 +939,9 @@ public class ExecutivePDFReporter extends PDFReporter {
         LOGGER.info("Leak period name is {}", leakPeriod);
         LOGGER.info("Periods are {}", project.getMeasures().getPeriods());
         //return Optional.ofNullable(project.getMeasures().getPeriods().get(0));
-        return this.leakPeriod.getPeriod(project.getMeasures());
+        Optional<Period_> period = this.leakPeriod.getPeriod(project.getMeasures());
+        LOGGER.info("Period chosen is {}", period.orElse(null));
+        return period;
     }
 
     protected void printSecurityBoard(final Project project, final Section section) throws DocumentException {
