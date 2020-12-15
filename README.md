@@ -48,13 +48,12 @@ In the previous version, you  Sonar Scanner configuration should contains the fo
 sonar.leak.period=NUMBER_OF_DAYS
 ```  
 
-TODO: [image]
+
 
 ### Download the report
 
-PDF report can be downloaded from the SonarQube GUI:
+PDF report can be downloaded from the SonarQube GUI or from the SONAR output folder ( example target/sonar with a Maven project).
 
-TODO: [image]
 
 Issue tracking:
 https://jira.codehaus.org/browse/SONARPLUGINS/component/14372
