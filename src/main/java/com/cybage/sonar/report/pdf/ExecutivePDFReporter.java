@@ -52,6 +52,7 @@ import static com.cybage.sonar.report.pdf.util.MetricKeys.WONT_FIX_ISSUES;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -97,19 +98,25 @@ public class ExecutivePDFReporter extends PDFReporter {
 
     private static final String REPORT_TYPE_PDF = "pdf";
 
-    private final URL          logo;
-    private final String       projectKey;
-    private final String       projectVersion;
-    private final List<String> sonarLanguage;
-    private final Set<String>  typesOfIssue;
-    private final String       leakPeriod;
-    private final Properties   configProperties;
-    private final Properties   langProperties;
-    private       Set<String>  otherMetrics;
+    private final URL                     logo;
+    private final String                  projectKey;
+    private final String                  projectVersion;
+    private final List<String>            sonarLanguage;
+    private final Set<String>             typesOfIssue;
+    private final LeakPeriodConfiguration leakPeriod;
+    private final Properties              configProperties;
+    private final Properties              langProperties;
+    private       Set<String>             otherMetrics;
 
-    public ExecutivePDFReporter(final Credentials credentials, final URL logo, final String projectKey,
-                                final String projectVersion, final List<String> sonarLanguage, final Set<String> otherMetrics,
-                                final Set<String> typesOfIssue, final String leakPeriod, final Properties configProperties,
+    public ExecutivePDFReporter(final Credentials credentials,
+                                final URL logo,
+                                final String projectKey,
+                                final String projectVersion,
+                                final List<String> sonarLanguage,
+                                final Set<String> otherMetrics,
+                                final Set<String> typesOfIssue,
+                                final LeakPeriodConfiguration leakPeriod,
+                                final Properties configProperties,
                                 final Properties langProperties) {
         super(credentials);
         this.logo             = logo;
@@ -227,7 +234,7 @@ public class ExecutivePDFReporter extends PDFReporter {
     }
 
     @Override
-    protected String getLeakPeriod() {
+    protected LeakPeriodConfiguration getLeakPeriod() {
         return this.leakPeriod;
     }
 
@@ -424,13 +431,13 @@ public class ExecutivePDFReporter extends PDFReporter {
 
     protected void printDashboard(final Project project, final Section section) throws DocumentException {
         section.add(new Phrase("", new Font(FontFamily.COURIER, 6)));
-        String leakPeriod = this.getLeakPeriod();
+        LeakPeriodConfiguration leakPeriod = this.getLeakPeriod();
         LOGGER.info("Leak period {}", leakPeriod);
         LOGGER.info("Periods {}", project.getMeasures().getPeriods());
 
-        Period_ period = project.getMeasures().getPeriods().get(0);
-        section.add(new Phrase("Leak Period : " + getTextProperty("general.period." + period.getMode()),
-                Style.NORMAL_HIGHLIGHTED_FONT));
+        Period_ period       = project.getMeasures().getPeriods().get(0);
+        String  textProperty = getTextProperty("general.period." + period.getMode());
+        section.add(new Phrase(MessageFormat.format("Leak Period : {0}", textProperty), Style.NORMAL_HIGHLIGHTED_FONT));
         printReliabilityBoard(project, section);
         printSecurityBoard(project, section);
         printMaintainabilityBoard(project, section);
@@ -448,7 +455,7 @@ public class ExecutivePDFReporter extends PDFReporter {
                             && !MetricDomains.getDomains().contains(project.getMeasure(om).getDomain()))
                     .collect(Collectors.toSet());
 
-            if (this.otherMetrics.size() > 0) {
+            if (!this.otherMetrics.isEmpty()) {
                 printOtherMetricBoard(project, section);
             }
         }
@@ -465,8 +472,7 @@ public class ExecutivePDFReporter extends PDFReporter {
 
         String[] priorities = Priority.getPrioritiesArray();
         for (String priority : priorities) {
-            if (mostViolatedRules.stream().filter(r -> r.getSeverity().equals(Priority.getPriority(priority)))
-                    .count() > 0) {
+            if (mostViolatedRules.stream().filter(r -> r.getSeverity().equals(Priority.getPriority(priority))).count() > 0) {
                 // Most Violated Rules Table
                 CustomTable tableMostViolatesRules = new CustomTable(3);
                 tableMostViolatesRules.setWidths(new int[]{30, 4, 3});
@@ -929,8 +935,8 @@ public class ExecutivePDFReporter extends PDFReporter {
     private Optional<Period_> getCurrentPeriod(Project project) {
         LOGGER.info("Leak period name is {}", leakPeriod);
         LOGGER.info("Periods are {}", project.getMeasures().getPeriods());
-        return Optional.ofNullable(project.getMeasures().getPeriods().get(0));
-        //return project.getMeasures().getPeriod_(this.leakPeriod);
+        //return Optional.ofNullable(project.getMeasures().getPeriods().get(0));
+        return this.leakPeriod.getPeriod(project.getMeasures());
     }
 
     protected void printSecurityBoard(final Project project, final Section section) throws DocumentException {

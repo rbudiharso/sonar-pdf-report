@@ -1,9 +1,11 @@
 package com.cybage.sonar.report.pdf.batch;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.cybage.sonar.report.pdf.entity.LeakPeriodConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FileSystem;
@@ -18,106 +20,110 @@ import java.util.Arrays;
 
 public class PDFPostJob implements PostJob {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PDFPostJob.class);
+    public static final  String        SKIP_PDF_KEY                        = "sonar.pdf.skip";
+    public static final  boolean       SKIP_PDF_DEFAULT_VALUE              = false;
+    public static final  String        REPORT_TYPE                         = "report.type";
+    public static final  String        REPORT_TYPE_DEFAULT_VALUE           = "pdf";
+    public static final  String        USERNAME                            = "sonar.login";
+    public static final  String        USERNAME_DEFAULT_VALUE              = "";
+    public static final  String        PASSWORD                            = "sonar.password";
+    public static final  String        PASSWORD_DEFAULT_VALUE              = "";
+    public static final  String        SONAR_HOST_URL                      = "sonar.host.url";
+    public static final  String        SONAR_HOST_URL_DEFAULT_VALUE        = "http://localhost:9000";
+    public static final  String        SONAR_PROJECT_VERSION               = "sonar.projectVersion";
+    public static final  String        SONAR_PROJECT_VERSION_DEFAULT_VALUE = "1.0";
+    public static final  String        SONAR_LANGUAGE                      = "sonar.language";
+    public static final  String        OTHER_METRICS                       = "sonar.pdf.other.metrics";
+    public static final  String        TYPES_OF_ISSUE                      = "sonar.pdf.issue.details";
+    public static final  String        LEAK_PERIOD                         = "sonar.leak.period";
+    public static final  int           STARTUP_DELAY_IN_MS                 = 5000;
+    private static final Logger        LOGGER                              = LoggerFactory.getLogger(PDFPostJob.class);
+    private final        FileSystem    fs;
+    private final        Configuration configuration;
 
-	private final FileSystem fs;
-	private Configuration configuration;
+    public PDFPostJob(Configuration configuration, FileSystem fs) {
+        this.fs            = fs;
+        this.configuration = configuration;
+    }
 
-	public PDFPostJob(Configuration configuration, FileSystem fs) {
-		this.fs = fs;
-		this.configuration = configuration;
-	}
+    @Override
+    public void describe(PostJobDescriptor arg0) {
 
-	public static final String SKIP_PDF_KEY = "sonar.pdf.skip";
-	public static final boolean SKIP_PDF_DEFAULT_VALUE = false;
+    }
 
-	public static final String REPORT_TYPE = "report.type";
-	public static final String REPORT_TYPE_DEFAULT_VALUE = "pdf";
+    @Override
+    public void execute(PostJobContext postJobContext) {
+        Configuration configuration = postJobContext.config();
+        if (configuration.hasKey(SKIP_PDF_KEY) && configuration.getBoolean(SKIP_PDF_KEY).get() == true) {
+            LOGGER.info("Skipping generation of PDF Report..");
+        } else {
 
-	public static final String USERNAME = "sonar.login";
-	public static final String USERNAME_DEFAULT_VALUE = "";
+            try {
+                Thread.sleep(STARTUP_DELAY_IN_MS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            String projectKey = configuration.get("sonar.projectKey").get();
 
-	public static final String PASSWORD = "sonar.password";
-	public static final String PASSWORD_DEFAULT_VALUE = "";
+            LOGGER.info("Executing decorator: PDF Report");
+            try {
+                LOGGER.info("postCOnfig {}", configuration.getClass().getMethod("getProperties").invoke(configuration));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+            String sonarHostUrl = configuration.hasKey(SONAR_HOST_URL)
+                    ? configuration.get(SONAR_HOST_URL).get() : SONAR_HOST_URL_DEFAULT_VALUE;
+            String username = configuration.hasKey(USERNAME) ? configuration.get(USERNAME).get()
+                    : USERNAME_DEFAULT_VALUE;
+            String password = configuration.hasKey(PASSWORD) ? configuration.get(PASSWORD).get()
+                    : PASSWORD_DEFAULT_VALUE;
+            String reportType = configuration.hasKey(REPORT_TYPE)
+                    ? configuration.get(REPORT_TYPE).get() : REPORT_TYPE_DEFAULT_VALUE;
+            String projectVersion = configuration.hasKey(SONAR_PROJECT_VERSION)
+                    ? configuration.get(SONAR_PROJECT_VERSION).get() : SONAR_PROJECT_VERSION_DEFAULT_VALUE;
+            List<String> sonarLanguage = configuration.hasKey(SONAR_LANGUAGE)
+                    ? Arrays.asList(configuration.getStringArray(SONAR_LANGUAGE)) : null;
+            Set<String> otherMetrics = configuration.hasKey(OTHER_METRICS)
+                    ? new HashSet<>(Arrays.asList(configuration.getStringArray(OTHER_METRICS))) : null;
+            Set<String> typesOfIssue = configuration.hasKey(TYPES_OF_ISSUE)
+                    ? new HashSet<>(Arrays.asList(configuration.getStringArray(TYPES_OF_ISSUE)))
+                    : new HashSet<>();
 
-	public static final String SONAR_HOST_URL = "sonar.host.url";
-	public static final String SONAR_HOST_URL_DEFAULT_VALUE = "http://localhost:9000";
+            LeakPeriodConfiguration leakPeriodConfiguration = new LeakPeriodConfiguration();
+            if (configuration.hasKey(LEAK_PERIOD)) {
+                String configurationValue = configuration.get(LEAK_PERIOD).get();
+                LOGGER.info("Plugin will use the following leak period MODE={}", configurationValue);
+                leakPeriodConfiguration.update(configurationValue);
+            } else {
+                LOGGER.info("Plugin will try to guess the default LEAK Period");
+            }
 
-	public static final String SONAR_PROJECT_VERSION = "sonar.projectVersion";
-	public static final String SONAR_PROJECT_VERSION_DEFAULT_VALUE = "1.0";
 
-	public static final String SONAR_LANGUAGE = "sonar.language";
+            PDFGenerator generator = new PDFGenerator(projectKey, projectVersion, sonarLanguage, otherMetrics,
+                    typesOfIssue, leakPeriodConfiguration, fs, sonarHostUrl, username, password, reportType);
 
-	public static final String OTHER_METRICS = "sonar.pdf.other.metrics";
+            try {
+                generator.execute();
+            } catch (Exception ex) {
+                LOGGER.error("Error in generating PDF report.");
+            }
 
-	public static final String TYPES_OF_ISSUE = "sonar.pdf.issue.details";
+        }
+        /*
+         * String path = fs.workDir().getAbsolutePath() + "/" +
+         * projectKey.replace(':', '-') + ".pdf";
+         *
+         * File pdf = new File(path); if (pdf.exists()) {
+         * FileUploader.upload(pdf, sonarHostUrl, username, password); } else {
+         * LOGGER.
+         * error("PDF file not found in local filesystem. Report could not be sent to server."
+         * ); }
+         */
 
-	public static final String LEAK_PERIOD = "sonar.leak.period";
-	public static final String LEAK_PERIOD_DEFAULT_VALUE = LeakPeriods.PREVIOUS_VERSION;
-
-	@Override
-	public void describe(PostJobDescriptor arg0) {
-
-	}
-
-	@Override
-	public void execute(PostJobContext postJobContext) {
-		if (postJobContext.config().hasKey(SKIP_PDF_KEY)
-				&& postJobContext.config().getBoolean(SKIP_PDF_KEY).get() == true) {
-			LOGGER.info("Skipping generation of PDF Report..");
-		} else {
-
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			String projectKey = postJobContext.config().get("sonar.projectKey").get();
-
-			LOGGER.info("Executing decorator: PDF Report");
-			String sonarHostUrl = postJobContext.config().hasKey(SONAR_HOST_URL)
-					? postJobContext.config().get(SONAR_HOST_URL).get() : SONAR_HOST_URL_DEFAULT_VALUE;
-			String username = postJobContext.config().hasKey(USERNAME) ? postJobContext.config().get(USERNAME).get()
-					: USERNAME_DEFAULT_VALUE;
-			String password = postJobContext.config().hasKey(PASSWORD) ? postJobContext.config().get(PASSWORD).get()
-					: PASSWORD_DEFAULT_VALUE;
-			String reportType = postJobContext.config().hasKey(REPORT_TYPE)
-					? postJobContext.config().get(REPORT_TYPE).get() : REPORT_TYPE_DEFAULT_VALUE;
-			String projectVersion = postJobContext.config().hasKey(SONAR_PROJECT_VERSION)
-					? postJobContext.config().get(SONAR_PROJECT_VERSION).get() : SONAR_PROJECT_VERSION_DEFAULT_VALUE;
-			List<String> sonarLanguage = postJobContext.config().hasKey(SONAR_LANGUAGE)
-					? Arrays.asList(postJobContext.config().getStringArray(SONAR_LANGUAGE)) : null;
-			Set<String> otherMetrics = postJobContext.config().hasKey(OTHER_METRICS)
-					? new HashSet<String>(Arrays.asList(postJobContext.config().getStringArray(OTHER_METRICS))) : null;
-			Set<String> typesOfIssue = postJobContext.config().hasKey(TYPES_OF_ISSUE)
-					? new HashSet<String>(Arrays.asList(postJobContext.config().getStringArray(TYPES_OF_ISSUE)))
-					: new HashSet<>();
-			String leakPeriod = postJobContext.config().hasKey(LEAK_PERIOD)
-					? postJobContext.config().get(LEAK_PERIOD).get() : LEAK_PERIOD_DEFAULT_VALUE;
-
-			LOGGER.info("Leak Period : " + leakPeriod);
-
-			PDFGenerator generator = new PDFGenerator(projectKey, projectVersion, sonarLanguage, otherMetrics,
-					typesOfIssue, leakPeriod, fs, sonarHostUrl, username, password, reportType);
-
-			try {
-				generator.execute();
-			} catch (Exception ex) {
-				LOGGER.error("Error in generating PDF report.");
-			}
-
-		}
-		/*
-		 * String path = fs.workDir().getAbsolutePath() + "/" +
-		 * projectKey.replace(':', '-') + ".pdf";
-		 * 
-		 * File pdf = new File(path); if (pdf.exists()) {
-		 * FileUploader.upload(pdf, sonarHostUrl, username, password); } else {
-		 * LOGGER.
-		 * error("PDF file not found in local filesystem. Report could not be sent to server."
-		 * ); }
-		 */
-
-	}
+    }
 
 }

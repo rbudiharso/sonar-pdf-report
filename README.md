@@ -31,6 +31,12 @@ SonarQube PDF works as a post-job task. In this way, a PDF report is generated a
 
 You can skip report generation or select report type (executive or workbook) globally or at the project level. You can also provide an username/password if your project is secured by SonarQube user management:
 
+In the previous version, you  Sonar Scanner configuration should contains the following property :
+
+```
+sonar.leak.period=NUMBEF_OF_DAYS
+```  
+
 TODO: [image]
 
 ### Download the report
