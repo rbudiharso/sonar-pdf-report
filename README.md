@@ -1,7 +1,18 @@
 Sonar PDF Report Plugin
 =========================
 
-[Compatibility and download information](http://update.sonarsource.org/plugins/pdfreport-confluence.html).
+
+This is a fork from a fork of the Opensource version.
+
+For the sake of traceability, I kept the package renaming of the previous fork from [(https://github.com/somasuraj3/test-p-6.7)](https://github.com/somasuraj3/test-p-6.7).
+
+I kept tthe license and the code.
+
+The plugin has been tested on SonarQube 8.0, on Linux 64 bits.
+
+At that time, the plugin worked but I cannot say I have done a proper exhaustive testing. If you find a bug, creates an issue. However since I am very busy, unless **you are a company and with the possibility to donate**, the fixes will be treated with a low priority.
+
+
 
 ## Description / Features
 
@@ -34,7 +45,7 @@ You can skip report generation or select report type (executive or workbook) glo
 In the previous version, you  Sonar Scanner configuration should contains the following property :
 
 ```
-sonar.leak.period=NUMBEF_OF_DAYS
+sonar.leak.period=NUMBER_OF_DAYS
 ```  
 
 TODO: [image]
