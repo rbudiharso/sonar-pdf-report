@@ -24,6 +24,9 @@ import com.cybage.sonar.report.pdf.entity.exception.ReportException;
 import com.cybage.sonar.report.pdf.util.MetricKeys;
 import org.sonarqube.ws.client.measures.ComponentRequest;
 
+import static com.cybage.sonar.report.pdf.builder.WSParameters.*;
+import static com.cybage.sonar.report.pdf.builder.WSParameters.PERIODS;
+
 public class MeasuresBuilder {
 
     private static final Logger          LOGGER              = LoggerFactory.getLogger(MeasuresBuilder.class);
@@ -103,10 +106,10 @@ public class MeasuresBuilder {
                              final Set<String> measuresAsString,
                              final String projectKey)
             throws HttpException, ReportException {
-
+        LOGGER.info("Adding measures for the metrics {} and project {}", measuresAsString, projectKey);
         ComponentRequest compWsReq = new ComponentRequest();
         compWsReq.setComponent(projectKey);
-        compWsReq.setAdditionalFields(Arrays.asList("metrics", "periods"));
+        compWsReq.setAdditionalFields(Arrays.asList(METRICS, PERIODS, PERIOD));
         compWsReq.setMetricKeys(new ArrayList<>(measuresAsString));
 
         org.sonarqube.ws.Measures.ComponentWsResponse compWsRes = wsClient.measures().component(compWsReq);
@@ -125,11 +128,12 @@ public class MeasuresBuilder {
         List<Measures.Period>  periods  = compWsRes.getPeriods().getPeriodsList();
 
         if (periods.size() == 0) {
-            throw new ReportException("Invalid leak period. Please set appropriate leak period.");
+            LOGGER.error("No period was returned, we don't have enough data yet.");
+            return ;
         }
         measures.setPeriods(periods.stream()
-                .map(p -> new Period_(p.getIndex(), p.getMode(), p.getDate(), p.getParameter()))
-                .collect(Collectors.toList()));
+                                   .map(p -> new Period_(p.getIndex(), p.getMode(), p.getDate(), p.getParameter()))
+                                   .collect(Collectors.toList()));
 
         LOGGER.info("Found {} measures", allNodes.size());
         LOGGER.info("Found {} periods", periods.size());

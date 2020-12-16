@@ -34,12 +34,13 @@ public class PDFPostJob implements PostJob {
     public static final  String        TYPES_OF_ISSUE                      = "sonar.pdf.issue.details";
     public static final  String        LEAK_PERIOD                         = "sonar.leak.period";
     public static final  int           STARTUP_DELAY_IN_MS                 = 5000;
+    public static final  String        LOGO                                = "report.logo";
     private static final Logger        LOGGER                              = LoggerFactory.getLogger(PDFPostJob.class);
     private final        FileSystem    fs;
     private final        Configuration configuration;
 
     public PDFPostJob(Configuration configuration, FileSystem fs) {
-        this.fs            = fs;
+        this.fs = fs;
         this.configuration = configuration;
     }
 

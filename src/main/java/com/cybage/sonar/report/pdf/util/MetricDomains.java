@@ -51,46 +51,46 @@ import java.util.Set;
 
 public class MetricDomains {
 
-	public static final String RELIABILITY = "Reliability";
-	public static final String SECURITY = "Security";
-	public static final String MAINTAINAILITY = "Maintainability";
-	// public static final String COVERAGE = "Coverage";
-	public static final String DUPLICATIONS = "Duplications";
-	public static final String SIZE = "Size";
-	public static final String COMPLEXITY = "Complexity";
-	public static final String DOCUMENTATION = "Documentation";
-	public static final String ISSUES = "Issues";
+    public static final String RELIABILITY    = "Reliability";
+    public static final String SECURITY       = "Security";
+    public static final String MAINTAINAILITY = "Maintainability";
+    public static final String COVERAGE       = "Coverage";
+    public static final String DUPLICATIONS   = "Duplications";
+    public static final String SIZE           = "Size";
+    public static final String COMPLEXITY     = "Complexity";
+    public static final String DOCUMENTATION  = "Documentation";
+    public static final String ISSUES         = "Issues";
 
-	private static final Map<String, List<String>> metricMap;
+    private static final Map<String, List<String>> metricMap;
 
-	static {
-		metricMap = new HashMap<>();
-		metricMap.put(RELIABILITY, Arrays.asList(BUGS, NEW_BUGS, RELIABILITY_RATING, RELIABILITY_REMEDIATION_EFFORT,
-				NEW_RELIABILITY_REMEDIATION_EFFORT));
-		metricMap.put(SECURITY, Arrays.asList(VULNERABILITIES, NEW_VULNERABILITIES, SECURITY_RATING,
-				SECURITY_REMEDIATION_EFFORT, NEW_SECURITY_REMEDIATION_EFFORT));
-		metricMap.put(MAINTAINAILITY, Arrays.asList(CODE_SMELLS, NEW_CODE_SMELLS, SQALE_RATING, SQALE_INDEX,
-				NEW_TECHNICAL_DEBT, SQALE_DEBT_RATIO, NEW_SQALE_DEBT_RATIO, EFFORT_TO_REACH_MAINTAINABILITY_RATING_A));
-		// metricMap.put(COVERAGE, Arrays.asList(MetricKeys.COVERAGE,
-		// LINE_COVERAGE, BRANCH_COVERAGE, UNCOVERED_LINES,
-		// UNCOVERED_CONDITIONS, LINES_TO_COVER));
-		metricMap.put(DUPLICATIONS,
-				Arrays.asList(DUPLICATED_LINES_DENSITY, DUPLICATED_BLOCKS, DUPLICATED_LINES, DUPLICATED_FILES));
-		metricMap.put(SIZE, Arrays.asList(NCLOC, LINES, STATEMENTS, FUNCTIONS, CLASSES, FILES, DIRECTORIES));
-		metricMap.put(COMPLEXITY, Arrays.asList(COMPLEXITY, FUNCTION_COMPLEXITY, FILE_COMPLEXITY, CLASS_COMPLEXITY));
-		metricMap.put(DOCUMENTATION, Arrays.asList(COMMENT_LINES_DENSITY, COMMENT_LINES));
-		metricMap.put(ISSUES, Arrays.asList(VIOLATIONS, NEW_VIOLATIONS, OPEN_ISSUES, REOPENED_ISSUES, CONFIRMED_ISSUES,
-				FALSE_POSITIVE_ISSUES, WONT_FIX_ISSUES));
-	}
+    static {
+        metricMap = new HashMap<>();
+        metricMap.put(RELIABILITY, Arrays.asList(BUGS, NEW_BUGS, RELIABILITY_RATING, RELIABILITY_REMEDIATION_EFFORT,
+                NEW_RELIABILITY_REMEDIATION_EFFORT));
+        metricMap.put(SECURITY, Arrays.asList(VULNERABILITIES, NEW_VULNERABILITIES, SECURITY_RATING,
+                SECURITY_REMEDIATION_EFFORT, NEW_SECURITY_REMEDIATION_EFFORT));
+        metricMap.put(MAINTAINAILITY, Arrays.asList(CODE_SMELLS, NEW_CODE_SMELLS, SQALE_RATING, SQALE_INDEX,
+                NEW_TECHNICAL_DEBT, SQALE_DEBT_RATIO, NEW_SQALE_DEBT_RATIO, EFFORT_TO_REACH_MAINTAINABILITY_RATING_A));
+        metricMap.put(COVERAGE, Arrays.asList(MetricKeys.COVERAGE,
+                MetricKeys.LINE_COVERAGE, MetricKeys.BRANCH_COVERAGE, MetricKeys.UNCOVERED_LINES,
+                MetricKeys.UNCOVERED_CONDITIONS, MetricKeys.LINES_TO_COVER));
+        metricMap.put(DUPLICATIONS,
+                Arrays.asList(DUPLICATED_LINES_DENSITY, DUPLICATED_BLOCKS, DUPLICATED_LINES, DUPLICATED_FILES));
+        metricMap.put(SIZE, Arrays.asList(NCLOC, LINES, STATEMENTS, FUNCTIONS, CLASSES, FILES, DIRECTORIES));
+        metricMap.put(COMPLEXITY, Arrays.asList(COMPLEXITY, FUNCTION_COMPLEXITY, FILE_COMPLEXITY, CLASS_COMPLEXITY));
+        metricMap.put(DOCUMENTATION, Arrays.asList(COMMENT_LINES_DENSITY, COMMENT_LINES));
+        metricMap.put(ISSUES, Arrays.asList(VIOLATIONS, NEW_VIOLATIONS, OPEN_ISSUES, REOPENED_ISSUES, CONFIRMED_ISSUES,
+                FALSE_POSITIVE_ISSUES, WONT_FIX_ISSUES));
+    }
 
-	public static List<String> getMetricKeys(String domain) {
-		return metricMap.get(domain);
-	}
+    public static List<String> getMetricKeys(String domain) {
+        return metricMap.get(domain);
+    }
 
-	public static Set<String> getDomains() {
-		// COVERAGE
-		return new HashSet<String>(Arrays.asList(RELIABILITY, SECURITY, MAINTAINAILITY, DUPLICATIONS, SIZE, COMPLEXITY,
-				DOCUMENTATION, ISSUES));
-	}
+    public static Set<String> getDomains() {
+        // COVERAGE
+        return new HashSet<String>(Arrays.asList(RELIABILITY, SECURITY, MAINTAINAILITY, DUPLICATIONS, SIZE, COMPLEXITY,
+                DOCUMENTATION, ISSUES));
+    }
 
 }
