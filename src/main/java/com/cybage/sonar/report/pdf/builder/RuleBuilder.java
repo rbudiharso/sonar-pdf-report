@@ -19,6 +19,7 @@ import org.sonarqube.ws.client.issues.SearchRequest;
 public class RuleBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RuleBuilder.class);
+    public static final int TOP_MAX_VIOLATED_RULES = 10;
 
     private static RuleBuilder builder;
 
@@ -52,7 +53,7 @@ public class RuleBuilder {
             SearchWsResponse searchWsRes = wsClient.issues().search(searchWsReq);
 
             if (searchWsRes.getFacets().getFacets(0) != null) {
-                int limit = 5;
+                int limit = TOP_MAX_VIOLATED_RULES;
                 limit = searchWsRes.getFacets().getFacets(0).getValuesCount() > limit ? limit
                         : searchWsRes.getFacets().getFacets(0).getValuesCount();
                 for (int j = 0; j < limit; j++) {
