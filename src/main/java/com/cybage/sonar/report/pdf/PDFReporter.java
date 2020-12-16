@@ -141,7 +141,9 @@ public abstract class PDFReporter {
 	 */
 
 	public String getTextProperty(final String key) {
-		return getLangProperties().getProperty(key);
+		final String property = getLangProperties().getProperty(key);
+		if ( property == null) return "missing!" + key;
+		return property;
 	}
 
 	public String getConfigProperty(final String key) {
