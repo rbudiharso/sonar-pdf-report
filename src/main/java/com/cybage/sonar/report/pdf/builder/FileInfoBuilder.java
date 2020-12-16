@@ -170,7 +170,7 @@ public class FileInfoBuilder {
 
         if (componentTreeWsRes.getComponentsList() != null) {
             limit = getLowerBound(limit, componentTreeWsRes.getComponentsCount());
-            LOGGER.info("Found {} components with duplication metrics", componentTreeWsRes.getComponentsList());
+            //LOGGER.info("Found {} components with duplication metrics", componentTreeWsRes.getComponentsList());
             for (int j = componentTreeWsRes.getComponentsCount() - 1; j >= componentTreeWsRes.getComponentsCount() - limit; j--) {
                 Measures.Component component = componentTreeWsRes.getComponents(j);
 
