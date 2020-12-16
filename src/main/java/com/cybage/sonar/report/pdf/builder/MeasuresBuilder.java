@@ -99,8 +99,10 @@ public class MeasuresBuilder {
      *
      * @throws ReportException
      */
-    private void addMeasures(final com.cybage.sonar.report.pdf.entity.Measures measures, final Set<String> measuresAsString, final String projectKey)
-            throws HttpException, IOException, ReportException {
+    private void addMeasures(final com.cybage.sonar.report.pdf.entity.Measures measures,
+                             final Set<String> measuresAsString,
+                             final String projectKey)
+            throws HttpException, ReportException {
 
         ComponentRequest compWsReq = new ComponentRequest();
         compWsReq.setComponent(projectKey);
@@ -116,7 +118,8 @@ public class MeasuresBuilder {
         }
     }
 
-    private void addAllMeasuresFromDocument(final com.cybage.sonar.report.pdf.entity.Measures measures, final org.sonarqube.ws.Measures.ComponentWsResponse compWsRes) throws ReportException {
+    private void addAllMeasuresFromDocument(final com.cybage.sonar.report.pdf.entity.Measures measures,
+                                            final org.sonarqube.ws.Measures.ComponentWsResponse compWsRes) throws ReportException {
         List<Measures.Measure> allNodes = compWsRes.getComponent().getMeasuresList();
         Measures.Metrics       metrics  = compWsRes.getMetrics();
         List<Measures.Period>  periods  = compWsRes.getPeriods().getPeriodsList();

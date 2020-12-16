@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -21,9 +22,9 @@ import org.sonarqube.ws.client.measures.ComponentTreeRequest;
 
 public class FileInfoBuilder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectStatusBuilder.class);
-
-    private static FileInfoBuilder builder;
+    public static final  String          FACET_FILES = "files";
+    private static final Logger          LOGGER      = LoggerFactory.getLogger(ProjectStatusBuilder.class);
+    private static       FileInfoBuilder builder;
 
     private final WsClient wsClient;
 
@@ -48,7 +49,7 @@ public class FileInfoBuilder {
 
         SearchRequest searchWsReq = new SearchRequest();
         searchWsReq.setComponentKeys(Arrays.asList(key));
-        searchWsReq.setFacets(Arrays.asList("fileUuids"));
+        searchWsReq.setFacets(Arrays.asList(FACET_FILES));
         //searchWsReq.setsetPageSize(500);
         SearchWsResponse searchWsRes = wsClient.issues().search(searchWsReq);
 
@@ -59,10 +60,12 @@ public class FileInfoBuilder {
 
             int j = 0;
             while (j < limit) {
-                FacetValue facetValue = searchWsRes.getFacets().getFacets(0).getValues(j);
-                Optional<Component> component = searchWsRes.getComponentsList().stream()
-                        .filter(c -> c.getUuid().equals(facetValue.getVal()) && c.getQualifier().equals("FIL"))
-                        .findFirst();
+                FacetValue            facetValue     = searchWsRes.getFacets().getFacets(0).getValues(j);
+                final List<Component> componentsList = searchWsRes.getComponentsList();
+                LOGGER.info("Components to scan {}", componentsList.size());
+                Optional<Component> component = componentsList.stream()
+                                                              .filter(retrievingFileComponent(facetValue))
+                                                              .findFirst();
                 if (component.isPresent()) {
                     FileInfo fileInfo = new FileInfo();
                     fileInfo.setKey(facetValue.getVal());
@@ -72,13 +75,17 @@ public class FileInfoBuilder {
                     fileInfo.setComplexity("0");
                     fileInfo.setDuplicatedLines("0");
                     files.add(fileInfo);
-                    j++;
                 }
+                j++;
             }
         } else {
             LOGGER.debug("There are no violated files");
         }
         return files;
+    }
+
+    private Predicate<Component> retrievingFileComponent(final FacetValue facetValue) {
+        return c -> c.getUuid().equals(facetValue.getVal()) && c.getQualifier().equals("FIL");
     }
 
     public List<FileInfo> initProjectMostComplexFilesByProjectKey(final String key) {
@@ -134,7 +141,7 @@ public class FileInfoBuilder {
         List<FileInfo> files = new ArrayList<>();
 
         int limit = 5;
-        
+
         ComponentTreeRequest compTreeWsReq = new ComponentTreeRequest();
         compTreeWsReq.setComponent(key);
         compTreeWsReq.setMetricKeys(Arrays.asList(MetricKeys.DUPLICATED_LINES));
