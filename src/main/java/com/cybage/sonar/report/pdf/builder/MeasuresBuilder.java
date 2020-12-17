@@ -129,7 +129,7 @@ public class MeasuresBuilder {
 
         if (periods.size() == 0) {
             LOGGER.error("No period was returned, we don't have enough data yet.");
-            return ;
+            return;
         }
         measures.setPeriods(periods.stream()
                                    .map(p -> new Period_(p.getIndex(), p.getMode(), p.getDate(), p.getParameter()))
@@ -142,13 +142,13 @@ public class MeasuresBuilder {
             if (!optionalMetric.isPresent()) {
                 throw new IllegalArgumentException("Measure was not found :" + measure.getMetric());
             }
-            addMeasureFromNode(measures, measure, optionalMetric);
+            addMeasureFromNode(measures, measure, optionalMetric.get());
         }
 
     }
 
     private void addMeasureFromNode(final com.cybage.sonar.report.pdf.entity.Measures measures, final Measures.Measure measureNode,
-                                    Optional<Metric> metric) {
+                                    Metric metric) {
         Measure measure = MeasureBuilder.initFromNode(measureNode, measures.getPeriods(), metric);
         measures.addMeasure(measure.getMetric(), measure);
     }

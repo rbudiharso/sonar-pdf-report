@@ -1,17 +1,14 @@
 package com.cybage.sonar.report.pdf.entity;
 
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class encapsulates the measures info.
  */
 public class Measures {
 
-	private Hashtable<String, Measure> measuresTable = new Hashtable<String, Measure>();
-	private List<Period_> periods;
+	private Map<String, Measure> measuresTable = new HashMap<>();
+	private List<Period_>        periods;
 
 	public Measures() {
 

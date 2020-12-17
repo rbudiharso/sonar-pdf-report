@@ -51,15 +51,15 @@ import java.util.Set;
 
 public class MetricDomains {
 
-    public static final String RELIABILITY    = "Reliability";
-    public static final String SECURITY       = "Security";
-    public static final String MAINTAINAILITY = "Maintainability";
-    public static final String COVERAGE       = "Coverage";
-    public static final String DUPLICATIONS   = "Duplications";
-    public static final String SIZE           = "Size";
-    public static final String COMPLEXITY     = "Complexity";
-    public static final String DOCUMENTATION  = "Documentation";
-    public static final String ISSUES         = "Issues";
+    public static final String RELIABILITY     = "Reliability";
+    public static final String SECURITY        = "Security";
+    public static final String MAINTAINABILITY = "Maintainability";
+    public static final String COVERAGE        = "Coverage";
+    public static final String DUPLICATIONS    = "Duplications";
+    public static final String SIZE            = "Size";
+    public static final String COMPLEXITY      = "Complexity";
+    public static final String DOCUMENTATION   = "Documentation";
+    public static final String ISSUES          = "Issues";
 
     private static final Map<String, List<String>> metricMap;
 
@@ -69,7 +69,7 @@ public class MetricDomains {
                 NEW_RELIABILITY_REMEDIATION_EFFORT));
         metricMap.put(SECURITY, Arrays.asList(VULNERABILITIES, NEW_VULNERABILITIES, SECURITY_RATING,
                 SECURITY_REMEDIATION_EFFORT, NEW_SECURITY_REMEDIATION_EFFORT));
-        metricMap.put(MAINTAINAILITY, Arrays.asList(CODE_SMELLS, NEW_CODE_SMELLS, SQALE_RATING, SQALE_INDEX,
+        metricMap.put(MAINTAINABILITY, Arrays.asList(CODE_SMELLS, NEW_CODE_SMELLS, SQALE_RATING, SQALE_INDEX,
                 NEW_TECHNICAL_DEBT, SQALE_DEBT_RATIO, NEW_SQALE_DEBT_RATIO, EFFORT_TO_REACH_MAINTAINABILITY_RATING_A));
         metricMap.put(COVERAGE, Arrays.asList(MetricKeys.COVERAGE,
                 MetricKeys.LINE_COVERAGE, MetricKeys.BRANCH_COVERAGE, MetricKeys.UNCOVERED_LINES,
@@ -89,7 +89,7 @@ public class MetricDomains {
 
     public static Set<String> getDomains() {
         // COVERAGE
-        return new HashSet<String>(Arrays.asList(RELIABILITY, SECURITY, MAINTAINAILITY, DUPLICATIONS, SIZE, COMPLEXITY,
+        return new HashSet<>(Arrays.asList(RELIABILITY, SECURITY, MAINTAINABILITY, DUPLICATIONS, SIZE, COMPLEXITY,
                 DOCUMENTATION, ISSUES));
     }
 

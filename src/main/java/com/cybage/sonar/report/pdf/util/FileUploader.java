@@ -18,42 +18,50 @@ import com.cybage.sonar.report.pdf.batch.PDFPostJob;
 
 public class FileUploader {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PDFPostJob.class);
+    public static final  String                                       UPLOAD_PATH = "/api/ce/submit?projectKey=ALMMaturity_JenkinsService_API_Feature:feature&projectName=ALMMaturity_JenkinsService_API_Feature";
+    private static final Logger                                       LOGGER      = LoggerFactory.getLogger(PDFPostJob.class);
+    private final        com.cybage.sonar.report.pdf.util.Credentials credentials;
 
-	public static void upload(final File report, final String url, String username, String password) {
+    public FileUploader(com.cybage.sonar.report.pdf.util.Credentials credentials) {
+        this.credentials = credentials;
 
-		PostMethod filePost = new PostMethod(url
-				+ "/api/ce/submit?projectKey=ALMMaturity_JenkinsService_API_Feature:feature&projectName=ALMMaturity_JenkinsService_API_Feature");
+    }
 
-		try {
-			LOGGER.info("Uploading PDF to server...");
-			LOGGER.info("Upload URL : " + url);
+    public void upload(final File reportPath) {
+        String     url      = credentials.getUrl();
+        PostMethod filePost = new PostMethod(url + UPLOAD_PATH);
 
-			Part[] parts = { new FilePart("upload", report) };
+        try {
+            LOGGER.info("Uploading PDF to server...");
+            LOGGER.info("Upload URL : " + url);
 
-			filePost.setRequestEntity(new MultipartRequestEntity(parts, filePost.getParams()));
+            Part[] parts = {new FilePart("upload", reportPath)};
 
-			HttpClient client = new HttpClient();
-			if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
-				client.getParams().setAuthenticationPreemptive(true);
-				Credentials credentials = new UsernamePasswordCredentials(username, password);
-				client.getState().setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT), credentials);
-			}
-			client.getHttpConnectionManager().getParams().setConnectionTimeout(10000);
+            filePost.setRequestEntity(new MultipartRequestEntity(parts, filePost.getParams()));
 
-			int status = client.executeMethod(filePost);
-			if (status == HttpStatus.SC_OK) {
-				LOGGER.info("PDF uploaded.");
-			} else {
-				LOGGER.error("Something went wrong storing the PDF at server side. Status: " + status);
-			}
-		} catch (Exception ex) {
-			LOGGER.error("Something went wrong storing the PDF at server side", ex);
-			ex.printStackTrace();
-		} finally {
-			filePost.releaseConnection();
-		}
+            HttpClient   client   = new HttpClient();
+            final String username = credentials.getUsername();
+            final String password = credentials.getPassword();
+            if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
+                client.getParams().setAuthenticationPreemptive(true);
+                Credentials credentials = new UsernamePasswordCredentials(username, password);
+                client.getState().setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT), credentials);
+            }
+            client.getHttpConnectionManager().getParams().setConnectionTimeout(10000);
 
-	}
+            int status = client.executeMethod(filePost);
+            if (status == HttpStatus.SC_OK) {
+                LOGGER.info("PDF uploaded.");
+            } else {
+                LOGGER.error("Something went wrong storing the PDF at server side. Status: " + status);
+            }
+        } catch (Exception ex) {
+            LOGGER.error("Something went wrong storing the PDF at server side", ex);
+            ex.printStackTrace();
+        } finally {
+            filePost.releaseConnection();
+        }
+
+    }
 
 }

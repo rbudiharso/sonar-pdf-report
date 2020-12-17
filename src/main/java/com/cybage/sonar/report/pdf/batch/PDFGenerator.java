@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.cybage.sonar.report.pdf.entity.LeakPeriodConfiguration;
+import com.cybage.sonar.report.pdf.util.FileUploader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FileSystem;
@@ -118,6 +119,13 @@ public class PDFGenerator {
             return;
         }
         writePdfReport(sonarProjectId, sdf, path, reporter);
+        //uploadPDF(path, credentials);
+    }
+
+    private void uploadPDF(final String path, final Credentials credentials) {
+        final FileUploader fileUploader = new FileUploader(credentials);
+        fileUploader.upload(new File(path));
+
     }
 
     private String computePdfReportPath(String sonarProjectId, SimpleDateFormat sdf) {

@@ -11,39 +11,46 @@ import org.sonarqube.ws.client.qualityprofiles.SearchRequest;
 
 public class QualityProfileBuilder {
 
-	// private static final Logger LOGGER =
-	// LoggerFactory.getLogger(QualityProfileBuilder.class);
 
-	private static QualityProfileBuilder builder;
+    private static QualityProfileBuilder builder;
 
-	private WsClient wsClient;
+    private final WsClient wsClient;
 
-	public QualityProfileBuilder(final WsClient wsClient) {
-		this.wsClient = wsClient;
-	}
+    public QualityProfileBuilder(final WsClient wsClient) {
+        this.wsClient = wsClient;
+    }
 
-	public static QualityProfileBuilder getInstance(final WsClient wsClient) {
-		if (builder == null) {
-			return new QualityProfileBuilder(wsClient);
-		}
+    public static QualityProfileBuilder getInstance(final WsClient wsClient) {
+        if (builder == null) {
+            return new QualityProfileBuilder(wsClient);
+        }
 
-		return builder;
-	}
+        return builder;
+    }
 
-	public List<QualityProfile> initProjectQualityProfilesByProjectKey(final String key) {
-		SearchRequest searchWsReq = new SearchRequest();
-		searchWsReq.setProject(key);
-		Qualityprofiles.SearchWsResponse searchWsRes = wsClient.qualityprofiles().search(searchWsReq);
+    public List<QualityProfile> initProjectQualityProfilesByProjectKey(final String key) {
+        SearchRequest searchWsReq = new SearchRequest();
+        searchWsReq.setProject(key);
+        Qualityprofiles.SearchWsResponse searchWsRes = wsClient.qualityprofiles().search(searchWsReq);
 
-		List<QualityProfile> profiles = new ArrayList<>();
+        List<QualityProfile> profiles = new ArrayList<>();
 
-		for (Qualityprofiles.SearchWsResponse.QualityProfile profile : searchWsRes.getProfilesList()) {
-			profiles.add(new QualityProfile(profile.getKey(), profile.getName(), profile.getLanguage(),
-					profile.getLanguageName(), profile.getIsInherited(), profile.getIsDefault(),
-					profile.getActiveRuleCount(), profile.getRulesUpdatedAt(), profile.getProjectCount()));
-		}
+        for (Qualityprofiles.SearchWsResponse.QualityProfile profile : searchWsRes.getProfilesList()) {
+            final QualityProfile qualityProfile = new QualityProfileEntityBuilder()
+                    .setKey(profile.getKey())
+                    .setName(profile.getName())
+                    .setLanguage(profile.getLanguage())
+                    .setLanguageName(profile.getLanguageName())
+                    .setIsInherited(profile.getIsInherited())
+                    .setIsDefault(profile.getIsDefault())
+                    .setActiveRuleCount(profile.getActiveRuleCount())
+                    .setRulesUpdatedAt(profile.getRulesUpdatedAt())
+                    .setProjectCount(profile.getProjectCount())
+                    .createQualityProfile();
+            profiles.add(qualityProfile);
+        }
 
-		return profiles;
+        return profiles;
 
-	}
+    }
 }

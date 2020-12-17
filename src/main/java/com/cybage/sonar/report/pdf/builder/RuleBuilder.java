@@ -1,9 +1,6 @@
 package com.cybage.sonar.report.pdf.builder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +13,13 @@ import com.cybage.sonar.report.pdf.entity.Priority;
 import com.cybage.sonar.report.pdf.entity.Rule;
 import org.sonarqube.ws.client.issues.SearchRequest;
 
+import static java.util.Collections.singletonList;
+
 public class RuleBuilder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RuleBuilder.class);
-    public static final int TOP_MAX_VIOLATED_RULES = 10;
-
-    private static RuleBuilder builder;
+    public static final  int         TOP_MAX_VIOLATED_RULES = 10;
+    private static final Logger      LOGGER                 = LoggerFactory.getLogger(RuleBuilder.class);
+    private static       RuleBuilder builder;
 
     private final WsClient wsClient;
 
@@ -43,25 +41,18 @@ public class RuleBuilder {
         List<Rule> rules      = new ArrayList<>();
 
         // Reverse iteration to get violations with upper level first
-
         for (int i = priorities.length - 1; i >= 0; i--) {
-            SearchRequest searchWsReq = new SearchRequest();
-            searchWsReq.setComponentKeys(Arrays.asList(key));
-            searchWsReq.setAdditionalFields(Arrays.asList("rules"));
-            searchWsReq.setFacets(Arrays.asList("rules"));
-            searchWsReq.setSeverities(Arrays.asList(priorities[i]));
-            SearchWsResponse searchWsRes = wsClient.issues().search(searchWsReq);
+            SearchWsResponse searchWsRes = searchViolationsPerPriority(key, priorities[i]);
 
-            if (searchWsRes.getFacets().getFacets(0) != null) {
-                int limit = TOP_MAX_VIOLATED_RULES;
-                limit = searchWsRes.getFacets().getFacets(0).getValuesCount() > limit ? limit
-                        : searchWsRes.getFacets().getFacets(0).getValuesCount();
+            final Common.Facet projectResources = searchWsRes.getFacets().getFacets(0);
+            if (projectResources != null) {
+                int limit = Math.min(projectResources.getValuesCount(), TOP_MAX_VIOLATED_RULES);
                 for (int j = 0; j < limit; j++) {
-                    FacetValue facetValue = searchWsRes.getFacets().getFacets(0).getValues(j);
-                    Optional<Common.Rule> rule = searchWsRes.getRules().getRulesList().stream()
-                            .filter(r -> r.getKey().equals(facetValue.getVal())).findFirst();
-                    rules.add(new Rule(facetValue.getVal(), rule.get().getName(), facetValue.getCount(),
-                            rule.get().getLangName(), Priority.getPriority(priorities[i])));
+                    FacetValue            facetValue   = projectResources.getValues(j);
+                    Optional<Common.Rule> optionalRule = findRuleResult(searchWsRes, facetValue);
+                    final Common.Rule     rule         = optionalRule.get();
+                    final String          priority     = Priority.getPriority(priorities[i]);
+                    rules.add(newRule(facetValue, rule, priority));
                 }
             } else {
                 LOGGER.debug("There are no violations with level " + priorities[i]);
@@ -70,5 +61,29 @@ public class RuleBuilder {
 
         return rules;
 
+    }
+
+    private SearchWsResponse searchViolationsPerPriority(final String key, final String priority1) {
+        SearchRequest searchWsReq = new SearchRequest();
+        searchWsReq.setComponentKeys(singletonList(key));
+        searchWsReq.setAdditionalFields(singletonList("rules"));
+        searchWsReq.setFacets(singletonList("rules"));
+        searchWsReq.setSeverities(singletonList(priority1));
+        return wsClient.issues().search(searchWsReq);
+    }
+
+    private Optional<Common.Rule> findRuleResult(final SearchWsResponse searchWsRes, final FacetValue facetValue) {
+        final List<Common.Rule> rulesList = searchWsRes.getRules().getRulesList();
+        return rulesList.stream()
+                        .filter(r -> Objects.equals(r.getKey(), facetValue.getVal()))
+                        .findFirst();
+    }
+
+    private Rule newRule(final FacetValue facetValue, final Common.Rule rule, final String priority) {
+        return new Rule(facetValue.getVal(),
+                rule.getName(),
+                facetValue.getCount(),
+                rule.getLangName(),
+                priority);
     }
 }

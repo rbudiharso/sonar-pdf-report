@@ -38,20 +38,38 @@ public class ProjectStatusBuilder {
         projectStatusWsReq.setProjectKey(key);
         Qualitygates.ProjectStatusResponse projectStatusWsRes = wsClient.qualitygates().projectStatus(projectStatusWsReq);
 
+        List<Condition>    conditions    = initProjectConditions(projectStatusWsRes);
+        List<StatusPeriod> statusPeriods = initStatusPeriods(projectStatusWsRes);
+        return new ProjectStatus(projectStatusWsRes.getProjectStatus().getStatus().toString(), conditions,
+                statusPeriods);
+
+    }
+
+    private List<Condition> initProjectConditions(final Qualitygates.ProjectStatusResponse projectStatusWsRes) {
         List<Condition> conditions = new ArrayList<>();
         for (Qualitygates.ProjectStatusResponse.Condition condition : projectStatusWsRes.getProjectStatus().getConditionsList()) {
-            Condition cond = new Condition(condition.getStatus().toString(), condition.getMetricKey(),
-                    condition.getComparator().toString(), condition.getPeriodIndex(), condition.getErrorThreshold(),
-                    condition.getActualValue(), condition.getWarningThreshold());
+            Condition cond = new ConditionBuilder()
+                    .setStatus(condition.getStatus().toString())
+                    .setMetricKey(condition.getMetricKey())
+                    .setComparator(condition.getComparator().toString())
+                    .setPeriodIndex(condition.getPeriodIndex())
+                    .setErrorThreshold(condition.getErrorThreshold())
+                    .setActualValue(condition.getActualValue())
+                    .setWarningThreshold(condition.getWarningThreshold())
+                    .createCondition();
             conditions.add(cond);
         }
+        return conditions;
+    }
 
+    private List<StatusPeriod> initStatusPeriods(final Qualitygates.ProjectStatusResponse projectStatusWsRes) {
         List<StatusPeriod> statusPeriods = new ArrayList<>();
-        for (Qualitygates.ProjectStatusResponse.Period period : projectStatusWsRes
-                .getProjectStatus().getPeriodsList()) {
-            StatusPeriod statusPeriod = new StatusPeriod();
-            statusPeriod.setIndex(period.getIndex());
-            statusPeriod.setMode(period.getMode());
+        for (Qualitygates.ProjectStatusResponse.Period period : projectStatusWsRes.getProjectStatus().getPeriodsList()) {
+            StatusPeriod statusPeriod = new StatusPeriodBuilder()
+                    .setIndex(period.getIndex())
+                    .setMode(period.getMode())
+                    .createStatusPeriod();
+
             if (period.getDate() != null) {
                 statusPeriod.setDate(period.getDate());
             }
@@ -60,8 +78,6 @@ public class ProjectStatusBuilder {
             }
             statusPeriods.add(statusPeriod);
         }
-        return new ProjectStatus(projectStatusWsRes.getProjectStatus().getStatus().toString(), conditions,
-                statusPeriods);
-
+        return statusPeriods;
     }
 }

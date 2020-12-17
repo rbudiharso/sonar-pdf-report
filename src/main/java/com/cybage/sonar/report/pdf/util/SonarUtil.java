@@ -2,21 +2,24 @@ package com.cybage.sonar.report.pdf.util;
 
 public class SonarUtil {
 
+	public static final int EIGHT_HOURS = 480;
+	private static final Integer MINUTES_PER_HOUR = 60;
+
 	public static String getWorkDurConversion(Integer minutes) {
 		Integer hours = null;
 		Integer days = null;
 
 		// 1140
-		if (minutes >= 60 && minutes < 480) {
-			hours = minutes / 60;
-			minutes = minutes % 60;
+		if (minutes >= MINUTES_PER_HOUR && minutes < EIGHT_HOURS) {
+			hours = minutes / MINUTES_PER_HOUR;
+			minutes = minutes % MINUTES_PER_HOUR;
 			return hours + "h " + minutes + "min";
-		} else if (minutes >= 480) {
-			days = (minutes / 60) / 8;
+		} else if (minutes >= EIGHT_HOURS) {
+			days = (minutes / MINUTES_PER_HOUR) / 8;
 			// minutes = minutes - (minutes * days);
-			minutes = minutes % 480;
-			hours = minutes / 60;
-			minutes = minutes % 60;
+			minutes = minutes % EIGHT_HOURS;
+			hours = minutes / MINUTES_PER_HOUR;
+			minutes = minutes % MINUTES_PER_HOUR;
 			return days + "d " + hours + "h " + minutes + "min";
 		} else {
 			return minutes + "min";

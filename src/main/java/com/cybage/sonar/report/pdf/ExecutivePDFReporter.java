@@ -3,7 +3,7 @@ package com.cybage.sonar.report.pdf;
 import static com.cybage.sonar.report.pdf.util.MetricDomains.DOCUMENTATION;
 import static com.cybage.sonar.report.pdf.util.MetricDomains.DUPLICATIONS;
 import static com.cybage.sonar.report.pdf.util.MetricDomains.ISSUES;
-import static com.cybage.sonar.report.pdf.util.MetricDomains.MAINTAINAILITY;
+import static com.cybage.sonar.report.pdf.util.MetricDomains.MAINTAINABILITY;
 import static com.cybage.sonar.report.pdf.util.MetricDomains.RELIABILITY;
 import static com.cybage.sonar.report.pdf.util.MetricDomains.SECURITY;
 import static com.cybage.sonar.report.pdf.util.MetricDomains.SIZE;
@@ -76,7 +76,6 @@ import com.cybage.sonar.report.pdf.util.MetricKeys;
 import com.cybage.sonar.report.pdf.util.ProjectStatusKeys;
 import com.cybage.sonar.report.pdf.util.Rating;
 import com.cybage.sonar.report.pdf.util.SonarUtil;
-import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.ChapterAutoNumber;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
@@ -1195,7 +1194,7 @@ public class ExecutivePDFReporter extends PDFReporter {
     protected void printMaintainabilityBoard(final Project project, final Section section) throws DocumentException {
 
         // Maintainability Title
-        Paragraph maintainabilityTitle = new Paragraph(getTextProperty("metrics." + MAINTAINAILITY.toLowerCase()),
+        Paragraph maintainabilityTitle = new Paragraph(getTextProperty("metrics." + MAINTAINABILITY.toLowerCase()),
                 Style.UNDERLINED_FONT);
 
         // Maintainability Main Table
@@ -1333,7 +1332,7 @@ public class ExecutivePDFReporter extends PDFReporter {
         tableMaintainabilityOther.addCell(effortToReachMaintainabilityRatingAValue);
 
         if (this.otherMetrics != null) {
-            printOtherMetricsOfDomain(project, MetricDomains.MAINTAINAILITY, tableMaintainabilityOther);
+            printOtherMetricsOfDomain(project, MetricDomains.MAINTAINABILITY, tableMaintainabilityOther);
         }
 
         section.add(new Paragraph(" ", new Font(FontFamily.COURIER, 6)));
