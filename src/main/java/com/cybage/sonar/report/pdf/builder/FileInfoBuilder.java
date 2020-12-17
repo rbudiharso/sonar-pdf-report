@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonarqube.ws.Common;
 import org.sonarqube.ws.Common.FacetValue;
 import org.sonarqube.ws.Issues.Component;
 import org.sonarqube.ws.Issues.SearchWsResponse;
@@ -17,6 +18,7 @@ import org.sonarqube.ws.client.measures.ComponentTreeRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
@@ -64,25 +66,27 @@ public class FileInfoBuilder {
         SearchWsResponse searchWsRes = wsClient.issues().search(searchWsReq);
         //LOGGER.info("Response :{}", new ReflectionToStringBuilder(searchWsRes).toString());
         // Facets is the list of components or resources.
-        if (searchWsRes.getFacets().getFacets(0) != null) {
-            int                   limit          = getLowerBound(LIMIT, searchWsRes.getFacets().getFacets(0).getValuesCount());
-            FacetValue            facetValue     = searchWsRes.getFacets().getFacets(0).getValues(0);
+        final Common.Facet projectResourceFacets = searchWsRes.getFacets().getFacets(0);
+        if (projectResourceFacets != null) {
+            int                   limit          = getLowerBound(LIMIT, projectResourceFacets.getValuesCount());
+            FacetValue            facetValue     = projectResourceFacets.getValues(0);
             final List<Component> componentsList = searchWsRes.getComponentsList();
             LOGGER.info("Components to scan {}", componentsList.size());
 
             final List<FileInfo> fileInfos = componentsList.stream()
-                                                         .limit(limit)
-                                                         .map(component -> {
-                                                             FileInfo fileInfo = new FileInfo();
-                                                             fileInfo.setKey(facetValue.getVal());
-                                                             fileInfo.setName(component.getName());
-                                                             fileInfo.setPath(component.getPath());
-                                                             fileInfo.setViolations(String.valueOf(facetValue.getCount()));
-                                                             fileInfo.setComplexity("0");
-                                                             fileInfo.setDuplicatedLines("0");
-                                                             return fileInfo;
-                                                         })
-                                                         .collect(Collectors.toList());
+                                                           .filter(retrievingFileComponent(facetValue))
+                                                           .limit(limit)
+                                                           .map(component -> {
+                                                               FileInfo fileInfo = new FileInfo();
+                                                               fileInfo.setKey(facetValue.getVal());
+                                                               fileInfo.setName(component.getName());
+                                                               fileInfo.setPath(component.getPath());
+                                                               fileInfo.setViolations(String.valueOf(facetValue.getCount()));
+                                                               fileInfo.setComplexity("0");
+                                                               fileInfo.setDuplicatedLines("0");
+                                                               return fileInfo;
+                                                           })
+                                                           .collect(Collectors.toList());
             files.addAll(fileInfos);
         } else {
             LOGGER.debug("There are no violated files");
@@ -94,15 +98,12 @@ public class FileInfoBuilder {
         return Math.min(valuesCount, limit);
     }
 
-    /**
+
     private Predicate<Component> retrievingFileComponent(final FacetValue facetValue) {
 
-        return c -> {
-            if (c.getPath().equals(facetValue.getVal()) && c.getQualifier().equals(S_QUALIFIER_FIL)) return c;
-            else return null;
-        };
+        return c -> (c.getPath().equals(facetValue.getVal()) && c.getQualifier().equals(S_QUALIFIER_FIL));
     }
-     **/
+
 
     public List<FileInfo> initProjectMostComplexFilesByProjectKey(final String key) {
 

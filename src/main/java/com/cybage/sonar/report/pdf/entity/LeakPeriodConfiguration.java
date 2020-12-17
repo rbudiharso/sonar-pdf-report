@@ -27,12 +27,19 @@ public class LeakPeriodConfiguration {
     public Optional<Period_> getPeriod(Measures measures) {
         if (configurationValue != null) {
             return measures.getPeriod_(this.configurationValue);
-        } else if (!measures.getPeriods().isEmpty()) {
+        } else if (measures != null && measures.getPeriods() != null && !measures.getPeriods().isEmpty()) {
             Period_ period_ = measures.getPeriods().get(0);
             this.configurationValue = period_.getMode();
             return Optional.of(period_);
         } else {
             throw new UnsupportedOperationException("Cannot find the LeakPeriodConfiguration to read the value, please specify the sonar.leakperiod property.");
         }
+    }
+
+    @Override
+    public String toString() {
+        return "LeakPeriodConfiguration{" +
+                "configurationValue='" + configurationValue + '\'' +
+                '}';
     }
 }
